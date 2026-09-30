@@ -1,0 +1,6 @@
+# Copy to ~/.config/autostart/ so the kiosk opens when the desktop session starts.
+[Desktop Entry]
+Type=Application
+Name=Heritage Kiosk
+Exec=/home/jetson/heritage-kiosk/scripts/kiosk.sh
+X-GNOME-Autostart-enabled=true

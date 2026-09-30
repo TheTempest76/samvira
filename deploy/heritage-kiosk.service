@@ -1,0 +1,21 @@
+# Runs the Next.js kiosk server at boot.
+#   sudo cp deploy/heritage-kiosk.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now heritage-kiosk
+# Edit User= and WorkingDirectory= to match where you cloned the project,
+# and ExecStart= to the output of `which npm` if Node came from nvm.
+[Unit]
+Description=Ambedkar Heritage Kiosk (Next.js)
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jetson
+WorkingDirectory=/home/jetson/heritage-kiosk
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

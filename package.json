@@ -1,0 +1,27 @@
+{
+  "name": "ambedkar-heritage-kiosk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototype kiosk + operator dashboard for the Dr. B. R. Ambedkar Digital Heritage Archive. Runs on a Jetson Orin Nano with local (Ollama) or online models.",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0 -p 3000",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0 -p 3000",
+    "ingest": "node scripts/ingest.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "next": "16.3.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.7.0"
+  }
+}
