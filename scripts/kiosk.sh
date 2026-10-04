@@ -5,7 +5,13 @@ URL="${KIOSK_URL:-http://localhost:3000}"
 for i in $(seq 1 60); do curl -fs "$URL/api/voice" >/dev/null && break; sleep 2; done
 BROWSER=$(command -v chromium-browser || command -v chromium || command -v google-chrome)
 xset s off -dpms 2>/dev/null   # keep the screen on
+# Spoken answers go to the monitor's built-in speaker (HDMI/DisplayPort audio), not the Jetson's empty analog jack.
+HDMI_SINK=$(pactl list short sinks 2>/dev/null | awk '/hdmi/{print $2; exit}')
+if [ -n "$HDMI_SINK" ]; then
+  pactl set-default-sink "$HDMI_SINK"; pactl set-sink-mute "$HDMI_SINK" 0; pactl set-sink-volume "$HDMI_SINK" 90%
+fi
 exec "$BROWSER" --kiosk --app="$URL" \
   --noerrdialogs --disable-infobars --disable-session-crashed-bubble --no-first-run \
   --overscroll-history-navigation=0 --disable-pinch \
-  --use-fake-ui-for-media-stream   # auto-allow the microphone for voice questions
+  --use-fake-ui-for-media-stream \
+  --autoplay-policy=no-user-gesture-required   # auto-allow the microphone, and spoken answers

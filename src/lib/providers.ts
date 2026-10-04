@@ -56,7 +56,7 @@ async function* ollamaStream(messages: ChatMsg[], model: string, signal?: AbortS
         model,
         messages,
         stream: true,
-        keep_alive: '30m',
+        keep_alive: env.local.keepAlive,
         options: { temperature: 0.2, num_ctx: 4096 },
       }),
       signal: s,
@@ -207,7 +207,10 @@ export async function embed(texts: string[], timeoutMs = 60000): Promise<number[
   const res = await fetch(`${env.local.baseUrl}/api/embed`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model, input: texts, keep_alive: '30m' }),
+    body: JSON.stringify({
+      model, input: texts, keep_alive: env.local.keepAlive,
+      ...(env.local.embedOnCpu ? { options: { num_gpu: 0 } } : {}),
+    }),
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (!res.ok) throw new Error(`embed HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);

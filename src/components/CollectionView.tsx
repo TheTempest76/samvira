@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import ScanPanel from './ScanPanel';
 
 interface Doc { id: string; title: string; type: string; date?: string; pages?: number }
 interface Hit { doc: string; title: string; date?: string; page?: number; chunk: string; text: string }
@@ -9,6 +11,8 @@ interface Hit { doc: string; title: string; date?: string; page?: number; chunk:
 export default function CollectionView({ docs, passages }: { docs: Doc[]; passages: number }) {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<Hit[] | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!q.trim()) { setHits(null); return; }
@@ -24,7 +28,16 @@ export default function CollectionView({ docs, passages }: { docs: Doc[]; passag
 
   return (
     <div>
-      <h1 className="hero-q">The collection</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <h1 className="hero-q">The collection</h1>
+        <button className="btn" style={{ marginLeft: 'auto' }} onClick={() => setScanning(true)}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" /><circle cx="12" cy="12" r="3.2" />
+          </svg>
+          Scan a page
+        </button>
+      </div>
+      {scanning && <ScanPanel onClose={() => { setScanning(false); router.refresh(); }} />}
       <p className="hero-sub">{docs.length} documents · {passages.toLocaleString()} searchable passages. Search the full text, or open a document to read it.</p>
       <div className="askbar" style={{ maxWidth: 900 }}>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search words, names, places, years…" aria-label="Search the collection" />

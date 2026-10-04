@@ -4,3 +4,9 @@ node_modules
 data/index.json
 data/settings.json
 data/querylog.jsonl
+
+# generated / local-only
+data/vectors.f32
+data/scans/
+server.log
+tsconfig.tsbuildinfo

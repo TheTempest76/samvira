@@ -19,7 +19,12 @@ export const env = {
     baseUrl: (process.env.LOCAL_BASE_URL || 'http://127.0.0.1:11434').replace(/\/$/, ''),
     chatModel: process.env.LOCAL_CHAT_MODEL || 'llama3.2:3b',
     embedModel: process.env.LOCAL_EMBED_MODEL ?? 'bge-m3',
+    // Run the embedding model on the CPU (~0.2 s per question). On the 8 GB Orin Nano the GPU can't hold
+    // the chat model, the embedder and Whisper together; CPU memory can borrow from the file cache, GPU memory can't.
+    embedOnCpu: process.env.LOCAL_EMBED_ON_CPU !== 'false',
     timeoutMs: num(process.env.LOCAL_TIMEOUT_MS, 45000),
+    // How long Ollama keeps models in memory after use. -1 = always (a kiosk shouldn't make a visitor wait ~20 s for a reload).
+    keepAlive: /^-?\d+$/.test(process.env.LOCAL_KEEP_ALIVE || '-1') ? Number(process.env.LOCAL_KEEP_ALIVE || -1) : (process.env.LOCAL_KEEP_ALIVE as string),
   },
 
   online: {
