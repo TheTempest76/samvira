@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { env } from './config';
 import { buildIndex, Chunk, DocMeta, INDEX_FILE, IndexFile, VECTORS_FILE } from './corpus';
 import { embed } from './providers';
+import { DEMO } from './demo';
 
 const STOP = new Set(
   'a an and are as at be by for from has have he her his i in is it its of on or she that the their them they this to was were what when where which who whom why will with did does do how about into than then there these those you your my me we our not no can could would should also after before over under between'.split(' ')
@@ -19,9 +20,12 @@ function stem(w: string): string {
   return w;
 }
 
+// Old and new spellings of the same place, so "Pune Pact" finds the Poona Pact.
+const ALIAS: Record<string, string> = { pune: 'poona', mumbai: 'bombay', babasaheb: 'ambedkar' };
+
 export function tokenize(s: string): string[] {
   const words = s.toLowerCase().normalize('NFC').match(/[\p{L}\p{M}\p{N}]+/gu) ?? [];
-  return words.filter((w) => w.length > 1 && !STOP.has(w)).map(stem);
+  return words.filter((w) => w.length > 1 && !STOP.has(w)).map((w) => stem(ALIAS[w] ?? w));
 }
 
 interface Loaded {
@@ -73,6 +77,13 @@ async function ensure(): Promise<Loaded> {
   return loaded;
 }
 
+let reloading = false;
+function reloadEmbedder() {
+  if (reloading) return;
+  reloading = true;
+  embed(['warm-up'], 180000).catch(() => {}).finally(() => (reloading = false));
+}
+
 export interface Hit {
   n: number; // 1-based citation number [S n]
   chunk: Chunk;
@@ -111,7 +122,7 @@ export async function search(query: string, k = env.retrieval.topK): Promise<Sea
   }
 
   let cos: Float64Array | null = null;
-  if (L.vectors && L.index.embedModel) {
+  if (L.vectors && L.index.embedModel && !DEMO) { // the scripted demo runs without models: keywords only
     try {
       const [qv] = await embed([query], 5000);
       const norm = Math.hypot(...qv) || 1;
@@ -123,7 +134,8 @@ export async function search(query: string, k = env.retrieval.topK): Promise<Sea
         cos[i] = s / norm;
       }
     } catch {
-      cos = null; // embedder offline → keyword only
+      cos = null; // embedder offline or still loading → keyword only for this question…
+      reloadEmbedder(); // …and get it back in memory for the next one
     }
   }
 
@@ -150,6 +162,16 @@ export async function search(query: string, k = env.retrieval.topK): Promise<Sea
   const topCosine = cos && hits.length ? Math.max(...hits.map((h) => h.cosine ?? 0)) : null;
   const found = topBm25 >= env.retrieval.minScore || (topCosine !== null && topCosine >= env.retrieval.minVector);
   return { hits, topBm25, topCosine, usedVectors: !!cos, found, ms: Date.now() - t0 };
+}
+
+/** Specific passages as numbered hits (S1, S2… in the order given). Used by the scripted demo. */
+export async function getChunks(ids: string[]): Promise<Hit[]> {
+  const L = await ensure();
+  return ids.flatMap((id) => {
+    const chunk = L.index.chunks.find((c) => c.id === id);
+    const doc = chunk && L.docById.get(chunk.doc);
+    return chunk && doc ? [{ chunk, doc, bm25: 0, cosine: null, score: 1 }] : [];
+  }).map((h, i) => ({ ...h, n: i + 1 }));
 }
 
 export async function getDoc(id: string) {

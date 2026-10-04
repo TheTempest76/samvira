@@ -17,6 +17,11 @@ export default async function DocPage({ params, searchParams }: { params: Promis
       <article className="reader selectable">
         <h1>{d.doc.title}</h1>
         <div className="meta">{[d.doc.type, d.doc.date, d.doc.place, d.doc.pages ? `${d.doc.pages} pages` : null].filter(Boolean).join(' · ')}</div>
+        {/\.(jpe?g|png)$/i.test(d.doc.file) && (
+          // The original photo/scan next to its OCR text.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="doc-scan" src={`/api/doc-image?id=${encodeURIComponent(d.doc.id)}`} alt={`Original scan of ${d.doc.title}`} />
+        )}
         {d.chunks.map((c) => {
           const showPage = c.page !== undefined && c.page !== lastPage;
           lastPage = c.page;

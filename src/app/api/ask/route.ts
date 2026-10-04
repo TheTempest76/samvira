@@ -1,4 +1,5 @@
 import { adminAllowed } from '@/lib/admin';
+import { DEMO, findDemoAnswer } from '@/lib/demo';
 import { env, isLang, Lang } from '@/lib/config';
 import { recordQuery, QueryRecord } from '@/lib/metrics';
 import {
@@ -11,7 +12,7 @@ import {
   translateQueryMessages,
 } from '@/lib/prompt';
 import { completeChat, onlineConfigured, ProviderError, streamChat, Target } from '@/lib/providers';
-import { Hit, search } from '@/lib/retrieval';
+import { getChunks, Hit, search } from '@/lib/retrieval';
 import { getSettings } from '@/lib/settings';
 
 export const runtime = 'nodejs';
@@ -40,7 +41,8 @@ export async function POST(req: Request) {
       const fallbacks: string[] = [];
       // Operators can force one engine (used by the dashboard's side-by-side benchmark).
       const force = adminAllowed(req) && ['local', 'online', 'extractive'].includes(body.force) ? (body.force as string) : null;
-      const mode = force ?? settings.mode;
+      // Scripted demo: unscripted questions get archive passages only, so no model is ever loaded.
+      const mode = force ?? (DEMO ? 'extractive' : settings.mode);
       const targets: Target[] =
         mode === 'auto' ? ['local', 'online'] : mode === 'local' ? ['local'] : mode === 'online' ? ['online'] : [];
       const modelFor = (t: Target) => (t === 'local' ? settings.localChatModel : settings.onlineChatModel);
@@ -52,10 +54,39 @@ export async function POST(req: Request) {
       };
 
       try {
+        // ── 0. Scripted demo answer ──
+        const scripted = DEMO && !force ? findDemoAnswer(question) : null;
+        if (scripted) {
+          const hits = await getChunks(scripted.sources);
+          send({
+            type: 'meta',
+            sources: hits.map((h) => ({
+              n: h.n, doc: h.doc.id, title: h.doc.title, type: h.doc.type, date: h.doc.date ?? null,
+              page: h.chunk.page ?? null, label: sourceLabel(h), chunk: h.chunk.id, snippet: h.chunk.text, score: 1,
+            })),
+            retrieval: { ms: 12, found: true, usedVectors: false, topBm25: 0 },
+          });
+          await sleep(700, req.signal);
+          // Stream a couple of words at a time, like a model writing.
+          const words = scripted.answer.match(/\S+\s*/g) ?? [];
+          rec.firstTokenMs = Date.now() - t0;
+          for (let i = 0; i < words.length; i += 2) {
+            if (req.signal.aborted) return;
+            send({ type: 'delta', text: words.slice(i, i + 2).join('') });
+            await sleep(55, req.signal);
+          }
+          const cited = citedNumbers(scripted.answer, hits.length);
+          Object.assign(rec, { answeredBy: 'local', model: 'scripted demo', verdict: 'grounded', cited: cited.length, sources: hits.length, latencyMs: Date.now() - t0 });
+          send({ type: 'done', verdict: 'grounded', cited, answeredBy: 'local', model: null, latencyMs: rec.latencyMs, firstTokenMs: rec.firstTokenMs, fallbacks });
+          recordQuery(rec);
+          return;
+        }
+
         // ── 1. Retrieve ──
         let result = await search(question);
-        // Non-Latin question and no multilingual vectors → ask a model for English keywords first.
-        if (!result.usedVectors && /[^\u0000-ɏ\s\d\p{P}]/u.test(question) && targets.length) {
+        // Non-Latin question that found nothing (no multilingual vectors, or a misspelling — common in spoken
+        // questions, e.g. "समजोता" for "समझौता") → ask a model for English keywords and search again.
+        if ((!result.usedVectors || !result.found) && /[^\u0000-ɏ\s\d\p{P}]/u.test(question) && targets.length) {
           for (const t of targets.filter(usable)) {
             try {
               send({ type: 'status', text: 'Translating your question for the archive search…' });
@@ -192,6 +223,9 @@ export async function POST(req: Request) {
     },
   });
 }
+
+const sleep = (ms: number, signal: AbortSignal) =>
+  new Promise<void>((r) => { const t = setTimeout(r, ms); signal.addEventListener('abort', () => { clearTimeout(t); r(); }); });
 
 export async function GET() {
   return Response.json({ usage: 'POST {question, lang}', topK: env.retrieval.topK });

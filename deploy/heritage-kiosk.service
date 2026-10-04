@@ -5,7 +5,7 @@
 # and ExecStart= to the output of `which npm` if Node came from nvm.
 [Unit]
 Description=Ambedkar Heritage Kiosk (Next.js)
-After=network-online.target ollama.service
+After=network-online.target ollama.service heritage-voice.service
 Wants=network-online.target
 
 [Service]

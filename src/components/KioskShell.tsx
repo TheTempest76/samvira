@@ -43,6 +43,19 @@ const T = {
   stop: { en: 'Stop', hi: 'रोकें', mr: 'थांबवा', kn: 'ನಿಲ್ಲಿಸಿ' },
   touch: { en: 'Touch anywhere to begin', hi: 'शुरू करने के लिए स्पर्श करें', mr: 'सुरू करण्यासाठी स्पर्श करा', kn: 'ಪ್ರಾರಂಭಿಸಲು ಸ್ಪರ್ಶಿಸಿ' },
   askAbout: { en: 'Ask about this', hi: 'इसके बारे में पूछें', mr: 'याबद्दल विचारा', kn: 'ಇದರ ಬಗ್ಗೆ ಕೇಳಿ' },
+  voiceHint: {
+    en: 'Tap the microphone and ask out loud — in English, हिन्दी, मराठी or ಕನ್ನಡ. The answer is read back to you.',
+    hi: 'माइक दबाएँ और बोलकर पूछें। उत्तर आपको पढ़कर सुनाया जाएगा।',
+    mr: 'माइक दाबा आणि बोलून विचारा. उत्तर तुम्हाला वाचून दाखवले जाईल.',
+    kn: 'ಮೈಕ್ ಒತ್ತಿ ಮಾತನಾಡಿ ಕೇಳಿ. ಉತ್ತರವನ್ನು ನಿಮಗೆ ಓದಿ ಹೇಳಲಾಗುತ್ತದೆ.',
+  },
+  listening: { en: 'Listening… speak now', hi: 'सुन रहा हूँ… अब बोलिए', mr: 'ऐकत आहे… आता बोला', kn: 'ಕೇಳುತ್ತಿದ್ದೇನೆ… ಈಗ ಮಾತನಾಡಿ' },
+  transcribing: { en: 'Understanding your question…', hi: 'आपका प्रश्न समझ रहा हूँ…', mr: 'तुमचा प्रश्न समजून घेत आहे…', kn: 'ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತಿದ್ದೇನೆ…' },
+  heardNothing: { en: "Sorry, I didn't hear a question. Tap the microphone and try again.", hi: 'माफ़ कीजिए, प्रश्न सुनाई नहीं दिया। माइक दबाकर फिर से कोशिश करें।', mr: 'माफ करा, प्रश्न ऐकू आला नाही. माइक दाबून पुन्हा प्रयत्न करा.', kn: 'ಕ್ಷಮಿಸಿ, ಪ್ರಶ್ನೆ ಕೇಳಿಸಲಿಲ್ಲ. ಮೈಕ್ ಒತ್ತಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.' },
+  voiceFailed: { en: 'Voice input failed.', hi: 'आवाज़ इनपुट विफल रहा।', mr: 'आवाज इनपुट अयशस्वी.', kn: 'ಧ್ವನಿ ಇನ್‌ಪುಟ್ ವಿಫಲವಾಯಿತು.' },
+  micUnavailable: { en: 'Microphone not available.', hi: 'माइक्रोफ़ोन उपलब्ध नहीं है।', mr: 'मायक्रोफोन उपलब्ध नाही.', kn: 'ಮೈಕ್ರೊಫೋನ್ ಲಭ್ಯವಿಲ್ಲ.' },
+  searching: { en: 'Searching the archive…', hi: 'संग्रह में खोज रहा हूँ…', mr: 'संग्रहात शोधत आहे…', kn: 'ಸಂಗ್ರಹದಲ್ಲಿ ಹುಡುಕುತ್ತಿದ್ದೇನೆ…' },
+  switchedTo: { en: 'Heard English', hi: 'हिन्दी में सुना — भाषा बदल दी गई', mr: 'मराठीत ऐकले — भाषा बदलली', kn: 'ಕನ್ನಡದಲ್ಲಿ ಕೇಳಿದೆ — ಭಾಷೆ ಬದಲಾಯಿಸಲಾಗಿದೆ' },
 } as const;
 export type TKey = keyof typeof T;
 

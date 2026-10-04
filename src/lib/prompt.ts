@@ -30,13 +30,24 @@ export function buildMessages(question: string, hits: Hit[], lang: Lang): ChatMs
   ];
 }
 
+// Worked examples: a 3B model otherwise echoes the question back in Hindi instead of translating it.
+const TRANSLATE_EXAMPLES: [string, string][] = [
+  ['महाड सत्याग्रह क्या था?', 'Mahad Satyagraha 1927'],
+  ['ಅವರು ವಿದೇಶದಲ್ಲಿ ಎಲ್ಲಿ ಓದಿದರು?', 'Ambedkar education abroad Columbia London'],
+  ['संविधान मसौदा समिति के अध्यक्ष कौन थे?', 'Drafting Committee chairman Constitution'],
+];
+
 export function translateQueryMessages(question: string): ChatMsg[] {
   return [
     {
       role: 'system',
-      content:
-        'Rewrite the user question as a short English search query of keywords (names, places, events, years). Output only the query, nothing else.',
+      content: [
+        "You translate museum visitors' questions about Dr. B. R. Ambedkar into English search keywords.",
+        'Output ONLY English keywords in Latin letters: names, places, events, works, years. No other words, no explanation.',
+        'Questions may be in Hindi, Marathi or Kannada and may contain spelling mistakes from speech recognition.',
+      ].join('\n'),
     },
+    ...TRANSLATE_EXAMPLES.flatMap(([q, a]): ChatMsg[] => [{ role: 'user', content: q }, { role: 'assistant', content: a }]),
     { role: 'user', content: question },
   ];
 }
